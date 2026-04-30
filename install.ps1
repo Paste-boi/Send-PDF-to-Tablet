@@ -81,20 +81,21 @@ Write-Host ""
 
 # --- 2. Context menu entries ------------------------------------------------
 function Set-ContextMenuEntry {
-    # Adds a single right-click entry under HKCU. SystemFileAssociations\.pdf
-    # is the right place because it survives reassigning the default app for
-    # PDFs (vs. the file-type-specific ProgId, which goes away on switch).
+    # Adds a single right-click entry under HKCU. SystemFileAssociations\<ext>
+    # is the right place because it survives reassigning the default app
+    # (vs. the file-type-specific ProgId, which goes away on switch).
     param(
+        [string] $Extension,   # e.g. '.pdf' or '.png'
         [string] $KeyName,
         [string] $MenuText,
         [string] $Mode
     )
-    $base = "HKCU:\Software\Classes\SystemFileAssociations\.pdf\shell\$KeyName"
+    $base = "HKCU:\Software\Classes\SystemFileAssociations\$Extension\shell\$KeyName"
     if (-not (Test-Path $base))           { New-Item -Path $base           -Force | Out-Null }
     if (-not (Test-Path "$base\command")) { New-Item -Path "$base\command" -Force | Out-Null }
 
     Set-ItemProperty -Path $base -Name '(default)' -Value $MenuText
-    # Use a stock icon - PowerShell.exe is always present, looks fine in Explorer.
+    # Stock icon - PowerShell.exe is always present, looks fine in Explorer.
     Set-ItemProperty -Path $base -Name 'Icon'      -Value 'powershell.exe,0'
 
     # %1 is the file path Explorer hands us. -WindowStyle Hidden suppresses
@@ -105,11 +106,25 @@ function Set-ContextMenuEntry {
     Set-ItemProperty -Path "$base\command" -Name '(default)' -Value $cmd
 }
 
+# Extension lists are also referenced (in spirit) by send_to_tablet.ps1's
+# allow-list; keep these in sync with that script if you add or remove types.
+$pdfExts   = @('.pdf')
+$imageExts = @('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.heic', '.tif', '.tiff')
+
 if (-not $SkipContextMenu) {
     Write-Host "[2/3] Context menu"
-    Set-ContextMenuEntry -KeyName 'SendToTabletView'     -MenuText 'Open on Tablet (View Only)' -Mode 'view'
-    Set-ContextMenuEntry -KeyName 'SendToTabletAnnotate' -MenuText 'Open on Tablet (Annotate)'  -Mode 'annotate'
-    Write-Host "      installed under HKCU\Software\Classes\SystemFileAssociations\.pdf\shell"
+    # PDFs: both View and Annotate entries.
+    foreach ($ext in $pdfExts) {
+        Set-ContextMenuEntry -Extension $ext -KeyName 'SendToTabletView'     -MenuText 'Open on Tablet (View Only)' -Mode 'view'
+        Set-ContextMenuEntry -Extension $ext -KeyName 'SendToTabletAnnotate' -MenuText 'Open on Tablet (Annotate)'  -Mode 'annotate'
+    }
+    # Images: View only. Annotate is PDF-only because the tablet apps in this
+    # workflow (PDF Expert / KOReader) only annotate PDFs.
+    foreach ($ext in $imageExts) {
+        Set-ContextMenuEntry -Extension $ext -KeyName 'SendToTabletView' -MenuText 'Open on Tablet (View Only)' -Mode 'view'
+    }
+    Write-Host "      installed under HKCU\Software\Classes\SystemFileAssociations\<ext>\shell"
+    Write-Host "      PDFs: View + Annotate.  Images ($($imageExts -join ' ')): View only."
     Write-Host "      (Windows 11: you may need to click 'Show more options' or Shift+right-click to see them)"
 } else {
     Write-Host "[2/3] Context menu  (skipped)"

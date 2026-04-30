@@ -131,7 +131,10 @@ function Invoke-ViewOnlyCleanup {
     if (-not (Test-Path -LiteralPath $ViewOnlyInbox)) { return }
     $cutoff = (Get-Date).AddMinutes(-1 * $ViewOnlyCleanupMinutes)
 
-    foreach ($f in Get-ChildItem -LiteralPath $ViewOnlyInbox -File -Filter '*.pdf' -ErrorAction SilentlyContinue) {
+    # No extension filter here: the view-only folder is exclusively populated
+    # by send_to_tablet.ps1, which also drops images. Anything that lands here
+    # should age out together.
+    foreach ($f in Get-ChildItem -LiteralPath $ViewOnlyInbox -File -ErrorAction SilentlyContinue) {
         if ($f.LastWriteTime -gt $cutoff) { continue }
         $ageMin = [int][math]::Round(((Get-Date) - $f.LastWriteTime).TotalMinutes)
         try {

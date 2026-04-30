@@ -59,14 +59,26 @@ if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
     Show-Error "File not found:`n$Path"
     exit 1
 }
-if ([System.IO.Path]::GetExtension($Path).ToLowerInvariant() -ne '.pdf') {
-    Show-Error "Not a PDF:`n$Path"
-    exit 1
-}
 
 $src      = Get-Item -LiteralPath $Path
 $origStem = [System.IO.Path]::GetFileNameWithoutExtension($src.Name)
-$ext      = $src.Extension   # always '.pdf' here
+$ext      = $src.Extension                       # case preserved for destName
+$extLower = $ext.ToLowerInvariant()
+
+# View mode accepts PDFs and the image types install.ps1 registers context
+# menu entries for. Annotate mode is PDF-only because the tablet apps in this
+# workflow only annotate PDFs. Keep this list in sync with install.ps1.
+$pdfExts   = @('.pdf')
+$imageExts = @('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.heic', '.tif', '.tiff')
+$allowed   = if ($Mode -eq 'view') { $pdfExts + $imageExts } else { $pdfExts }
+if ($extLower -notin $allowed) {
+    if ($Mode -eq 'annotate') {
+        Show-Error "Annotate mode is PDF-only.`n`nThis file is not a PDF:`n$Path"
+    } else {
+        Show-Error "Unsupported file type '$ext':`n$Path"
+    }
+    exit 1
+}
 
 # =============================================================================
 # VIEW MODE

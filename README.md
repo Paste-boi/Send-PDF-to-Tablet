@@ -2,7 +2,10 @@
 
 Right-click any PDF on Windows and send it to a tablet via Syncthing — either
 view-only (auto-cleaned after a delay) or annotate-mode (where the tablet's
-edits flow back to the original folder automatically).
+edits flow back to the original folder automatically). Common image types
+(`.png .jpg .jpeg .gif .bmp .webp .heic .tif .tiff`) get the View-Only entry
+as well, with the same delivery and cleanup behavior. Annotate mode is
+PDF-only, since the tablet apps in this workflow only annotate PDFs.
 
 ## Requirements
 
@@ -184,9 +187,13 @@ recover manually:
 # stop and remove the scheduled task
 Unregister-ScheduledTask -TaskName 'Send PDF to Tablet - Watcher' -Confirm:$false
 
-# remove the right-click entries
-Remove-Item 'HKCU:\Software\Classes\SystemFileAssociations\.pdf\shell\SendToTabletView'     -Recurse
-Remove-Item 'HKCU:\Software\Classes\SystemFileAssociations\.pdf\shell\SendToTabletAnnotate' -Recurse
+# remove the right-click entries (loops over every extension and key)
+foreach ($ext in '.pdf','.png','.jpg','.jpeg','.gif','.bmp','.webp','.heic','.tif','.tiff') {
+    foreach ($key in 'SendToTabletView','SendToTabletAnnotate') {
+        $path = "HKCU:\Software\Classes\SystemFileAssociations\$ext\shell\$key"
+        if (Test-Path $path) { Remove-Item $path -Recurse -Force }
+    }
+}
 ```
 
 The Syncthing folders, log, and origin map are left alone so you don't
