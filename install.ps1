@@ -157,22 +157,37 @@ if (-not $SkipScheduledTask) {
         UserId      = $currentUser
     }
 
-    # Restart on failure - the watcher should never crash, but if it does
-    # (e.g. Syncthing folder briefly unmounted), Task Scheduler will revive it.
-    # MultipleInstances=IgnoreNew means the unlock trigger is a no-op when the
-    # watcher is already running, so unlocking the screen never spawns dupes.
+    # Self-healing watchdog. Fires every 10 minutes forever; combined with
+    # MultipleInstances=IgnoreNew below, it's a no-op when the watcher is
+    # alive and a revival when it isn't. Covers every failure mode without
+    # us having to enumerate them: AMSI re-flag, transient I/O crash, the
+    # rare path where neither logon nor unlock fires (laptop suspended for
+    # days, then resumed without locking, etc).
+    # Task Scheduler caps RepetitionDuration at 9999 days (~27 years). That is
+    # not actually "forever", but it outlives any deployment of this tool.
+    $watchdogTrigger = New-ScheduledTaskTrigger `
+        -Once -At (Get-Date) `
+        -RepetitionInterval (New-TimeSpan -Minutes 10) `
+        -RepetitionDuration (New-TimeSpan -Days 9999)
+
+    # ExecutionTimeLimit=0 means "no limit". The default is PT72H, which
+    # silently terminates the watcher every 3 days - the bug this trigger
+    # set is built to survive even if a future Windows release reintroduces
+    # an implicit cap. RestartCount handles transient script failures; the
+    # watchdog trigger handles everything else.
     $settings = New-ScheduledTaskSettingsSet `
         -AllowStartIfOnBatteries `
         -DontStopIfGoingOnBatteries `
         -StartWhenAvailable `
         -MultipleInstances IgnoreNew `
+        -ExecutionTimeLimit (New-TimeSpan -Seconds 0) `
         -RestartCount 3 `
         -RestartInterval (New-TimeSpan -Minutes 1)
 
     $principal = New-ScheduledTaskPrincipal -UserId $currentUser -LogonType Interactive
 
     Register-ScheduledTask -TaskName $taskName `
-        -Action $action -Trigger @($logonTrigger, $unlockTrigger) -Settings $settings -Principal $principal `
+        -Action $action -Trigger @($logonTrigger, $unlockTrigger, $watchdogTrigger) -Settings $settings -Principal $principal `
         -Force | Out-Null
     Write-Host "      registered: '$taskName'"
 
