@@ -1,0 +1,22 @@
+# Personal config: contains your Syncthing folder paths.
+# Copy config.example.ps1 to config.ps1 and edit there.
+config.ps1
+
+# Runtime state. origin-map.json holds real source paths from your file
+# server, so it must never be published.
+state/
+
+# Runtime logs. Each line includes the absolute path of the file that was
+# sent or returned, so logs leak the same information as origin-map.json.
+logs/
+
+# Editor / OS junk
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
+desktop.ini
+.DS_Store

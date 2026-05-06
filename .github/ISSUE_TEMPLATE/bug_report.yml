@@ -1,0 +1,97 @@
+name: Bug report
+description: Something isn't working as described in the README.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report. Most "doesn't work"
+        issues come down to environment differences, so please fill in
+        every field — vague reports usually can't be acted on.
+
+  - type: checkboxes
+    id: prechecks
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I read the **Scope and support** section of the README and my setup is in scope (Windows + Syncthing + a supported tablet workflow).
+          required: true
+        - label: I checked `logs\sync.log` for an error line related to my issue.
+          required: true
+        - label: I confirmed the paths in my `config.ps1` exist and match the folders shared in Syncthing.
+          required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: "Run `winver` or `[System.Environment]::OSVersion.Version` and paste the result."
+      placeholder: "Windows 11 Pro 23H2 (build 22631.xxxx)"
+    validations:
+      required: true
+
+  - type: input
+    id: powershell
+    attributes:
+      label: PowerShell version
+      description: "Run `$PSVersionTable.PSVersion` and paste the result."
+      placeholder: "5.1.22621.xxxx"
+    validations:
+      required: true
+
+  - type: input
+    id: syncthing
+    attributes:
+      label: Syncthing versions (PC and tablet)
+      placeholder: "PC: v1.27.6 — Tablet: v1.27.4 (Android / iOS / etc.)"
+    validations:
+      required: true
+
+  - type: input
+    id: tablet
+    attributes:
+      label: Tablet model and PDF app
+      placeholder: "Boox Note Air 5C, KOReader 2024.04 — or iPad Pro, PDF Expert 7"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Which mode is affected?
+      options:
+        - View Only
+        - Annotate
+        - Both
+        - Neither (install / setup issue)
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What did you click, in what order? What did you expect vs. what happened?
+      placeholder: |
+        1. Right-clicked report.pdf in Explorer → Open on Tablet (Annotate)
+        2. Entered suffix "review"
+        3. Expected: file appears in TabletInbox
+        4. Actual: nothing happens, no error dialog
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Relevant log excerpt
+      description: "Paste the last 20–50 lines of `logs\\sync.log` around the time of the issue. Redact paths if they're sensitive."
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Antivirus / EDR in use, OneDrive-redirected Documents folder, Group Policy restrictions, custom Syncthing folder layout, etc.

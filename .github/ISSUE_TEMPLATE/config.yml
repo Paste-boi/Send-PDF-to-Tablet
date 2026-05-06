@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Different tablet / OS / sync tool
+    url: https://github.com/Paste-boi/Send-PDF-to-Tablet/blob/main/README.md#scope-and-support
+    about: This is a Windows + Syncthing + Boox/iPad PoC. Other setups are out of scope, but PRs that add support are welcome — please open a draft PR rather than an issue.
+  - name: Feature request
+    url: https://github.com/Paste-boi/Send-PDF-to-Tablet/blob/main/README.md#scope-and-support
+    about: Feature requests aren't tracked as issues. If it's something you'd use, open a draft PR.
